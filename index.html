@@ -1,0 +1,891 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NUET Study OS</title>
+
+<style>
+:root{
+  --accent:#6575e8;
+  --soft:#edf0ff;
+  --ink:#252b42;
+  --muted:#858ba0;
+  --line:#e8eaf2;
+  --surface:#fff;
+  --bg:#f5f7fc;
+  --glow:rgba(101,117,232,.13);
+  --ornament:rgba(101,117,232,.075);
+  --radius:20px;
+  --shadow:0 10px 35px rgba(31,41,75,.045);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  transition:background .4s,color .3s;min-height:100vh;
+}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
+  outline:3px solid var(--glow);outline-offset:2px
+}
+
+/* ---------- THEMES ---------- */
+body[data-theme="dashboard"]{
+ --accent:#6675df;--soft:#edf0ff;--bg:#f4f6fc;
+ --glow:rgba(102,117,223,.15);--ornament:rgba(102,117,223,.07);
+}
+body[data-theme="study"]{
+ --accent:#357bdc;--soft:#e8f2ff;--bg:#f0f6ff;
+ --glow:rgba(53,123,220,.16);--ornament:rgba(53,123,220,.075);
+}
+body[data-theme="analytics"]{
+ --accent:#8760ce;--soft:#f0eaff;--bg:#f7f3ff;
+ --glow:rgba(135,96,206,.16);--ornament:rgba(135,96,206,.08);
+}
+body[data-theme="attendance"]{
+ --accent:#238a68;--soft:#e3f6ed;--bg:#f0faf5;
+ --glow:rgba(35,138,104,.15);--ornament:rgba(35,138,104,.075);
+}
+body[data-theme="schedule"]{
+ --accent:#8554d5;--soft:#efe7ff;--bg:#f6f1ff;
+ --glow:rgba(133,84,213,.16);--ornament:rgba(133,84,213,.08);
+}
+body[data-theme="training"]{
+ --accent:#ce8325;--soft:#fff0d9;--bg:#fff8ed;
+ --glow:rgba(206,131,37,.16);--ornament:rgba(206,131,37,.085);
+}
+body[data-theme="finals"]{
+ --accent:#2468e8;--soft:#e3edff;--bg:#edf4ff;
+ --glow:rgba(36,104,232,.19);--ornament:rgba(36,104,232,.09);
+}
+body[data-theme="links"]{
+ --accent:#168b99;--soft:#e1f7f8;--bg:#effafb;
+ --glow:rgba(22,139,153,.15);--ornament:rgba(22,139,153,.08);
+}
+body[data-theme="settings"]{
+ --accent:#5e687d;--soft:#e9edf3;--bg:#f3f5f8;
+ --glow:rgba(94,104,125,.15);--ornament:rgba(94,104,125,.07);
+}
+
+/* ---------- BACKGROUND ART ---------- */
+.ambient{
+ position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;
+ transition:opacity .3s;
+}
+.ambient-orb{
+ position:absolute;border-radius:50%;
+ background:radial-gradient(circle,var(--glow),transparent 70%);
+ transition:all .45s;
+}
+.orb-one{width:570px;height:570px;right:-210px;top:65px}
+.orb-two{width:410px;height:410px;left:13%;bottom:-260px}
+.ambient-pattern{
+ position:absolute;right:55px;top:105px;
+ width:300px;height:300px;color:var(--accent);
+ opacity:.10;transition:color .35s;
+}
+.ambient-pattern svg{width:100%;height:100%}
+.ambient-pattern text{
+ font-family:Georgia,serif;font-weight:500;fill:currentColor;
+}
+.ambient-grid{
+ position:absolute;inset:0;
+ background-image:radial-gradient(var(--ornament) 1px,transparent 1px);
+ background-size:24px 24px;
+ mask-image:linear-gradient(135deg,black,transparent 68%);
+}
+@media(max-width:700px){
+ .ambient-pattern{right:-60px;top:130px;width:210px;height:210px;opacity:.075}
+ .orb-one{width:350px;height:350px;right:-180px}
+}
+
+/* ---------- APP LAYOUT ---------- */
+.app{display:flex;min-height:100vh}
+.sidebar{
+ width:250px;flex-shrink:0;background:rgba(255,255,255,.82);
+ backdrop-filter:blur(20px);border-right:1px solid var(--line);
+ padding:24px 15px;display:flex;flex-direction:column;
+}
+.brand{display:flex;align-items:center;gap:11px;padding:0 10px 25px}
+.brand-icon{
+ width:40px;height:40px;border-radius:14px;display:grid;place-items:center;
+ color:white;background:#20273b;font-weight:850;font-size:17px;
+ box-shadow:0 5px 15px #20273b25;
+}
+.brand strong{font-size:14px;letter-spacing:-.4px;display:block}
+.brand small{display:block;color:var(--muted);font-size:10px;margin-top:4px}
+.nav-label{padding:13px 12px 9px;font-size:9px;font-weight:850;letter-spacing:1.8px;color:#a0a6b7}
+.nav{display:grid;gap:5px}
+.nav button{
+ position:relative;border:0;background:transparent;text-align:left;
+ padding:11px 12px;border-radius:12px;color:#737b91;font-size:12px;
+ display:flex;align-items:center;gap:11px;transition:background .22s,color .22s,transform .22s;
+}
+.nav button:hover{background:#f3f5fa;transform:translateX(2px)}
+.nav button.active{background:var(--soft);color:var(--accent);font-weight:750}
+.nav button.active:before{
+ content:"";position:absolute;left:0;top:25%;height:50%;width:3px;
+ border-radius:0 4px 4px 0;background:var(--accent);
+}
+.nav .ico{width:21px;text-align:center;font-size:16px}
+.sidebar-bottom{margin-top:auto;padding:18px 10px 0;border-top:1px solid var(--line)}
+.sidebar-bottom p{font-size:10px;line-height:1.7;color:var(--muted)}
+.main{flex:1;min-width:0;position:relative}
+.topbar{
+ height:72px;padding:0 34px;display:flex;align-items:center;
+ justify-content:space-between;gap:15px;
+ border-bottom:1px solid var(--line);background:rgba(255,255,255,.65);
+ backdrop-filter:blur(18px);position:sticky;top:0;z-index:10;
+}
+.breadcrumb{font-size:11px;color:var(--muted)}
+.breadcrumb strong{color:var(--ink)}
+.top-actions{display:flex;align-items:center;gap:12px}
+.date-label{font-size:11px;color:var(--muted)}
+.avatar{
+ width:34px;height:34px;border-radius:12px;background:var(--soft);
+ color:var(--accent);display:grid;place-items:center;font-size:12px;font-weight:850;
+}
+.content{max-width:1450px;margin:auto;padding:31px 34px 60px}
+.page-enter{animation:pageEnter .28s ease both}
+@keyframes pageEnter{from{opacity:.3;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* ---------- COMPONENTS ---------- */
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;margin-bottom:25px}
+.eyebrow{font-size:9px;letter-spacing:2px;color:var(--accent);font-weight:850;margin-bottom:9px}
+h1{font-size:29px;letter-spacing:-1.15px;margin:0 0 8px;font-weight:790}
+h2{font-size:14px;letter-spacing:-.3px;margin:0}
+h3{font-size:12px;margin:0}
+.subtitle{font-size:12px;line-height:1.7;color:var(--muted);margin:0;max-width:630px}
+.small{font-size:10px}
+.muted{color:var(--muted)}
+.card{
+ position:relative;min-width:0;background:rgba(255,255,255,.89);
+ border:1px solid rgba(224,228,239,.85);border-radius:var(--radius);
+ padding:21px;box-shadow:var(--shadow);overflow:hidden;
+}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.card-head .muted{font-size:10px;margin-top:5px}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.metric{padding:19px 20px;transition:transform .2s,border-color .2s}
+.metric:hover{transform:translateY(-2px);border-color:var(--glow)}
+.metric-label{font-size:11px;color:var(--muted);margin-bottom:13px}
+.metric-value{font-size:29px;letter-spacing:-1.3px;font-weight:800;overflow-wrap:anywhere}
+.metric-note{font-size:10px;color:var(--muted);margin-top:8px;line-height:1.5}
+.metric-icon{
+ float:right;width:34px;height:34px;border-radius:12px;
+ background:var(--soft);color:var(--accent);display:grid;place-items:center;font-size:15px;
+}
+.btn{
+ border:1px solid var(--line);background:white;color:var(--ink);
+ padding:10px 13px;border-radius:11px;font-size:11px;font-weight:700;
+ transition:transform .2s,background .2s,color .2s,border-color .2s;
+}
+.btn:hover{transform:translateY(-1px);border-color:var(--accent)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:white}
+.btn-primary:hover{filter:brightness(.96)}
+.btn-soft{background:var(--soft);border-color:transparent;color:var(--accent)}
+.btn-danger{background:#fff1f2;color:#d34258;border-color:#ffe0e4}
+.btn-small{padding:7px 9px;font-size:10px;border-radius:9px}
+.btn-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.stack{display:grid;gap:9px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.tag{
+ display:inline-flex;align-items:center;padding:5px 8px;border-radius:8px;
+ background:var(--soft);color:var(--accent);font-size:9px;font-weight:800;white-space:nowrap;
+}
+.tag.green{background:#e3f7ed;color:#23855c}
+.tag.orange{background:#fff0dc;color:#ad6e18}
+.tag.red{background:#ffecef;color:#c23f57}
+.tag.gray{background:#eff1f5;color:#72798b}
+.progress{height:6px;background:#eff1f6;border-radius:50px;overflow:hidden;margin-top:9px}
+.progress span{display:block;height:100%;border-radius:50px;background:var(--accent);transition:width .35s}
+.chart{height:205px;display:flex;align-items:stretch;gap:12px;padding-top:10px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0}
+.bar-area{
+ flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center;
+ background:repeating-linear-gradient(to top,transparent 0,transparent 39px,#edf0f5 40px);
+ border-radius:8px 8px 0 0;
+}
+.bar{width:min(33px,75%);min-height:3px;background:var(--accent);border-radius:8px 8px 3px 3px;transition:height .35s;opacity:.9}
+.bar:hover{opacity:1;filter:brightness(.92)}
+.bar-label,.bar-num{font-size:9px;color:var(--muted);white-space:nowrap}
+.bar-num{min-height:12px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{text-align:left;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.6px;padding:11px 9px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:13px 9px;border-bottom:1px solid #f0f1f6;vertical-align:middle}
+tr:last-child td{border-bottom:0}
+.empty{text-align:center;padding:34px 12px;color:var(--muted);font-size:11px;line-height:1.8}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.field{display:grid;gap:7px;min-width:0}
+.field.full{grid-column:1/-1}
+.field label{font-size:10px;color:#6d7488;font-weight:750}
+.field input,.field select,.field textarea{
+ width:100%;min-width:0;padding:11px 12px;border:1px solid #e1e5ef;
+ background:#fff;border-radius:10px;color:var(--ink);font-size:11px;
+}
+.field textarea{min-height:75px;resize:vertical}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent)}
+.week-switch{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.week-switch strong{font-size:11px;white-space:nowrap}
+.session{display:flex;align-items:flex-start;gap:12px;padding:13px 0;border-bottom:1px solid #eff0f5}
+.session:last-child{border-bottom:0}
+.session-dot{width:9px;height:9px;border-radius:50%;background:var(--accent);margin-top:4px;flex-shrink:0}
+.session-main{flex:1;min-width:0}
+.session-title{font-size:11px;font-weight:750;margin-bottom:5px;overflow-wrap:anywhere}
+.session-sub{font-size:10px;line-height:1.6;color:var(--muted)}
+.day-card{border:1px solid var(--line);border-radius:13px;padding:10px;min-height:105px;background:#ffffffa8}
+.day-name{font-size:9px;color:var(--muted);margin-bottom:9px}
+.day-item{font-size:9px;line-height:1.5;background:var(--soft);color:var(--accent);border-radius:7px;padding:6px;margin-top:5px}
+.link-card{display:flex;gap:12px;align-items:flex-start}
+.link-icon{height:39px;width:39px;border-radius:13px;background:var(--soft);color:var(--accent);display:grid;place-items:center;flex-shrink:0;font-size:17px}
+.link-main{flex:1;min-width:0}
+.link-main h3{overflow-wrap:anywhere;margin:2px 0 7px}
+.link-main p{font-size:10px;color:var(--muted);line-height:1.6;margin:0 0 10px;overflow-wrap:anywhere}
+.settings-row{padding:16px 0;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:15px}
+.settings-row:last-child{border:0}
+.settings-row p{font-size:10px;color:var(--muted);line-height:1.6;margin:5px 0 0}
+.modal-backdrop{position:fixed;inset:0;background:#15192a66;backdrop-filter:blur(5px);z-index:30;display:none;align-items:center;justify-content:center;padding:18px}
+.modal-backdrop.show{display:flex}
+.modal{width:min(530px,100%);max-height:90vh;overflow:auto;background:white;border-radius:22px;padding:25px;box-shadow:0 25px 90px #0003;animation:appear .2s ease}
+.modal h2{font-size:20px;margin-bottom:7px}
+.modal-desc{font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:22px}
+.modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:20px}
+@keyframes appear{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+.toast{
+ position:fixed;bottom:22px;right:22px;z-index:50;background:#20273b;color:white;
+ padding:13px 18px;border-radius:12px;font-size:11px;box-shadow:0 8px 35px #0002;
+ opacity:0;transform:translateY(8px);pointer-events:none;transition:.25s;
+}
+.toast.show{opacity:1;transform:translateY(0)}
+@media(max-width:1100px){
+ .sidebar{width:220px}.content{padding:25px 22px}.topbar{padding:0 22px}
+ .g4{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:760px){
+ .app{display:block}
+ .sidebar{width:100%;padding:12px;border-right:0;border-bottom:1px solid var(--line)}
+ .brand{padding:0 5px 12px}.brand-icon{width:34px;height:34px}
+ .nav-label,.sidebar-bottom{display:none}
+ .nav{display:flex;overflow-x:auto;gap:4px;padding-bottom:2px}
+ .nav button{white-space:nowrap;padding:9px 11px;font-size:10px;flex-shrink:0}
+ .nav .ico{width:auto}
+ .topbar{height:53px;padding:0 16px;position:relative}
+ .content{padding:22px 13px 40px}
+ h1{font-size:25px}.page-head{margin-bottom:19px}
+ .g2,.g3{grid-template-columns:1fr}
+ .g4{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .metric{padding:15px}.metric-value{font-size:24px}
+ .card{padding:15px}.chart{gap:5px;height:185px}
+ .form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}
+ .date-label{display:none}
+ .page-head>.btn{flex-shrink:0}
+ .grid.week-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+</style>
+</head>
+
+<body data-theme="dashboard">
+<div class="ambient" aria-hidden="true">
+  <div class="ambient-grid"></div>
+  <div class="ambient-orb orb-one"></div>
+  <div class="ambient-orb orb-two"></div>
+  <div class="ambient-pattern" id="ambientPattern"></div>
+</div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">N.</div>
+      <div><strong>NUET Study OS</strong><small>Personal study workspace</small></div>
+    </div>
+    <div class="nav-label">YOUR WORKSPACE</div>
+    <nav class="nav" id="nav">
+      <button data-page="dashboard" class="active"><span class="ico">◫</span>Overview</button>
+      <button data-page="study"><span class="ico">◷</span>Study Log</button>
+      <button data-page="analytics"><span class="ico">▥</span>Analytics</button>
+      <button data-page="attendance"><span class="ico">✓</span>Attendance</button>
+      <button data-page="schedule"><span class="ico">▦</span>Schedule</button>
+      <button data-page="training"><span class="ico">∑</span>Training Mocks</button>
+      <button data-page="finals"><span class="ico">★</span>Final Mocks</button>
+      <button data-page="links"><span class="ico">↗</span>Resource Library</button>
+      <button data-page="settings"><span class="ico">⚙</span>Settings</button>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="row"><strong style="font-size:11px">NUET 2027</strong><span class="tag">In progress</span></div>
+      <p>A personal workspace for focused preparation, consistent tracking and measurable progress.</p>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="breadcrumb">Workspace / <strong id="crumb">Overview</strong></div>
+      <div class="top-actions"><span class="date-label" id="today"></span><div class="avatar">N</div></div>
+    </header>
+    <div class="content" id="content"></div>
+  </main>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal" id="modal"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+const $ = s => document.querySelector(s);
+const STORE = "nuet-study-os-v3";
+
+const META = {
+ dashboard:{title:"Overview",eyebrow:"YOUR WORKSPACE",theme:"dashboard",art:"◌"},
+ study:{title:"Study Log",eyebrow:"TIME MANAGEMENT",theme:"study",art:"◷"},
+ analytics:{title:"Weekly Analytics",eyebrow:"YOUR PROGRESS",theme:"analytics",art:"∿"},
+ attendance:{title:"Attendance",eyebrow:"CONSISTENCY",theme:"attendance",art:"❧"},
+ schedule:{title:"Schedule",eyebrow:"YOUR WEEK",theme:"schedule",art:"✳"},
+ training:{title:"Training Mocks",eyebrow:"PRACTICE MODE",theme:"training",art:"∑"},
+ finals:{title:"Final Mocks",eyebrow:"WEEKLY MILESTONES",theme:"finals",art:"∫"},
+ links:{title:"Resource Library",eyebrow:"YOUR TOOLKIT",theme:"links",art:"⌘"},
+ settings:{title:"Settings",eyebrow:"PERSONALIZATION",theme:"settings",art:"⚙"}
+};
+
+const DAYS=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const DAY_RU=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const SUBJECTS=["Mathematics","Critical Thinking"];
+
+const DEFAULT_SCHEDULE=[
+ {day:1,time:"08:00",end:"16:00",title:"School",type:"School"},
+ {day:2,time:"08:00",end:"16:00",title:"School",type:"School"},
+ {day:3,time:"08:00",end:"16:00",title:"School",type:"School"},
+ {day:4,time:"08:00",end:"16:00",title:"School",type:"School"},
+ {day:5,time:"08:00",end:"16:00",title:"School",type:"School"},
+ {day:1,time:"20:00",end:"21:00",title:"Critical Thinking STP",type:"Critical Thinking"},
+ {day:2,time:"20:00",end:"21:00",title:"Mathematics STP",type:"Mathematics"},
+ {day:3,time:"20:00",end:"21:00",title:"Critical Thinking STP",type:"Critical Thinking"},
+ {day:4,time:"20:00",end:"21:00",title:"Mathematics STP",type:"Mathematics"},
+ {day:7,time:"16:00",end:"18:00",title:"Math + Critical Thinking STP",type:"Both"},
+ {day:1,time:"17:30",end:"18:30",title:"Mathematics Pixels",type:"Mathematics"},
+ {day:4,time:"17:30",end:"18:30",title:"Mathematics Pixels",type:"Mathematics"},
+ {day:2,time:"17:30",end:"18:30",title:"Critical Thinking Pixels",type:"Critical Thinking"},
+ {day:6,time:"17:30",end:"18:30",title:"Critical Thinking Pixels",type:"Critical Thinking"}
+];
+
+function freshState(){
+ return {
+  study:[],attendance:[],mocks:[],links:[],
+  schedule:DEFAULT_SCHEDULE.map(x=>({...x,id:uid()})),
+  settings:{goal:4}
+ };
+}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8);}
+function load(){
+ try{
+  const x=JSON.parse(localStorage.getItem(STORE));
+  if(!x)return freshState();
+  const base=freshState();
+  return {...base,...x,settings:{...base.settings,...x.settings},
+   schedule:Array.isArray(x.schedule)?x.schedule:base.schedule,
+   study:Array.isArray(x.study)?x.study:[],
+   attendance:Array.isArray(x.attendance)?x.attendance:[],
+   mocks:Array.isArray(x.mocks)?x.mocks:[],
+   links:Array.isArray(x.links)?x.links:[]};
+ }catch{return freshState();}
+}
+let state=load();
+let page="dashboard";
+let selectedWeek=weekStart(new Date());
+let modalSubmit=null;
+
+function save(){try{localStorage.setItem(STORE,JSON.stringify(state));}catch{notify("Unable to save. Export a backup or free browser storage.");}}
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function localDate(d){const x=new Date(d);return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}-${String(x.getDate()).padStart(2,"0")}`;}
+function parseDate(s){const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d,12);}
+function weekStart(d){const x=new Date(d);x.setHours(12,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return x;}
+function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x;}
+function weekKey(d){return localDate(weekStart(d));}
+function weekDates(start=selectedWeek){return Array.from({length:7},(_,i)=>addDays(start,i));}
+function sameWeek(a,b){return weekKey(a)===weekKey(b);}
+function fmtDate(d,opts={day:"numeric",month:"short"}){return new Date(d).toLocaleDateString("en-GB",opts);}
+function fmtDuration(n){n=Number(n)||0;const h=Math.floor(n/60),m=n%60;return h?`${h}h${m?` ${m}m`:""}`:`${m}m`;}
+function hours(n){return `${(n/60).toFixed(1)}h`;}
+function studyFor(date){return state.study.filter(x=>x.date===date);}
+function studyMinutes(date){return studyFor(date).reduce((s,x)=>s+Number(x.minutes||0),0);}
+function totalStudy(dates){return dates.reduce((s,d)=>s+studyMinutes(localDate(d)),0);}
+function mocksInWeek(start=selectedWeek){return state.mocks.filter(x=>x.date&&sameWeek(parseDate(x.date),start));}
+function weekLabel(){return `${fmtDate(selectedWeek)} – ${fmtDate(addDays(selectedWeek,6))}`;}
+
+function notify(msg){
+ const el=$("#toast");el.textContent=msg;el.classList.add("show");
+ clearTimeout(notify.timer);notify.timer=setTimeout(()=>el.classList.remove("show"),2500);
+}
+
+/* Decorative background artwork changes with the active tab. */
+function setTheme(){
+ const m=META[page]||META.dashboard;
+ document.body.dataset.theme=m.theme;
+ const art={
+  dashboard:`<svg viewBox="0 0 300 300"><circle cx="150" cy="150" r="104" fill="none" stroke="currentColor" stroke-width="1"/><circle cx="150" cy="150" r="72" fill="none" stroke="currentColor" stroke-width="1"/><circle cx="150" cy="150" r="38" fill="none" stroke="currentColor" stroke-width="1"/><circle cx="150" cy="150" r="7" fill="currentColor"/><circle cx="225" cy="108" r="5" fill="currentColor"/><circle cx="81" cy="207" r="4" fill="currentColor"/></svg>`,
+  study:`<svg viewBox="0 0 300 300"><text x="28" y="125" font-size="115">◷</text><path d="M40 165 H250 M40 184 H200 M40 203 H230" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="230" cy="70" r="24" fill="none" stroke="currentColor" stroke-width="2"/></svg>`,
+  analytics:`<svg viewBox="0 0 300 300"><path d="M35 225 L90 175 L130 195 L180 110 L220 130 L265 60" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M35 225 L90 175 L130 195 L180 110 L220 130 L265 60 L265 250 L35 250Z" fill="currentColor" opacity=".08"/><g fill="currentColor"><circle cx="90" cy="175" r="5"/><circle cx="180" cy="110" r="5"/><circle cx="265" cy="60" r="5"/></g></svg>`,
+  attendance:`<svg viewBox="0 0 300 300"><path d="M150 270 C145 200 151 120 190 35 M150 215 C115 175 80 166 48 170 C68 207 107 224 150 215 M162 167 C200 124 231 120 262 128 C244 160 207 178 162 167 M170 110 C139 75 110 66 84 70 C100 100 133 116 170 110" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M53 39 L60 47 L75 29" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>`,
+  schedule:`<svg viewBox="0 0 300 300"><g fill="none" stroke="currentColor"><circle cx="150" cy="150" r="95"/><circle cx="150" cy="150" r="65"/><ellipse cx="150" cy="150" rx="35" ry="95" transform="rotate(45 150 150)"/><ellipse cx="150" cy="150" rx="35" ry="95" transform="rotate(-45 150 150)"/></g><circle cx="150" cy="150" r="7" fill="currentColor"/><circle cx="243" cy="150" r="5" fill="currentColor"/></svg>`,
+  training:`<svg viewBox="0 0 300 300"><text x="35" y="105" font-size="62">∑</text><text x="140" y="165" font-size="48">π</text><text x="54" y="224" font-size="43">√x</text><text x="190" y="75" font-size="33">∞</text><circle cx="230" cy="220" r="35" fill="none" stroke="currentColor" stroke-width="2"/></svg>`,
+  finals:`<svg viewBox="0 0 300 300"><path d="M150 35 L170 112 L250 85 L205 150 L270 198 L188 196 L150 270 L112 196 L30 198 L95 150 L50 85 L130 112Z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="150" cy="150" r="35" fill="none" stroke="currentColor" stroke-width="2"/><path d="M132 151 L145 164 L171 135" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  links:`<svg viewBox="0 0 300 300"><g fill="none" stroke="currentColor" stroke-width="2"><circle cx="150" cy="150" r="85"/><circle cx="150" cy="150" r="40"/><path d="M150 65 V110 M150 190 V235 M65 150 H110 M190 150 H235 M90 90 L122 122 M178 178 L210 210 M210 90 L178 122 M122 178 L90 210"/></g><g fill="currentColor"><circle cx="150" cy="65" r="6"/><circle cx="235" cy="150" r="6"/><circle cx="150" cy="235" r="6"/><circle cx="65" cy="150" r="6"/></g></svg>`,
+  settings:`<svg viewBox="0 0 300 300"><text x="55" y="205" font-size="150">⚙</text><circle cx="150" cy="150" r="110" fill="none" stroke="currentColor" stroke-dasharray="4 9" stroke-width="2"/></svg>`
+ };
+ $("#ambientPattern").innerHTML=art[page]||art.dashboard;
+}
+
+function metric(label,value,note,icon){
+ return `<div class="card metric"><div class="metric-icon">${icon}</div><div class="metric-label">${label}</div><div class="metric-value">${value}</div><div class="metric-note">${note}</div></div>`;
+}
+function section(title,subtitle="",right=""){
+ return `<div class="card-head"><div><h2>${title}</h2>${subtitle?`<div class="muted">${subtitle}</div>`:""}</div>${right}</div>`;
+}
+function pageHead(title,sub,action=""){
+ return `<div class="page-head"><div><div class="eyebrow">${META[page].eyebrow}</div><h1>${title}</h1><p class="subtitle">${sub}</p></div>${action}</div>`;
+}
+function weekControl(){
+ return `<div class="week-switch"><button class="btn btn-small" data-action="week-prev">←</button><strong>${weekLabel()}</strong><button class="btn btn-small" data-action="week-next">→</button><button class="btn btn-small" data-action="week-now">Today</button></div>`;
+}
+function barChart(dates,values,maxValue){
+ return `<div class="chart">${dates.map((d,i)=>{
+  const h=maxValue?Math.max(values[i]>0?4:0,values[i]/maxValue*100):0;
+  return `<div class="bar-col"><div class="bar-num">${values[i]?hours(values[i]):"—"}</div><div class="bar-area"><div class="bar" title="${fmtDate(d,{weekday:"long",day:"numeric",month:"short"})}: ${fmtDuration(values[i])}" style="height:${h}%"></div></div><div class="bar-label">${DAY_RU[(d.getDay()+6)%7]}</div></div>`;
+ }).join("")}</div>`;
+}
+function empty(msg){return `<div class="empty">${msg}</div>`;}
+function field(label,name,value="",type="text",opts={}){
+ let control="";
+ if(type==="select"){
+  control=`<select name="${name}" ${opts.required===false?"":"required"}>${opts.options.map(o=>`<option value="${esc(o.value)}" ${String(value)===String(o.value)?"selected":""}>${esc(o.label)}</option>`).join("")}</select>`;
+ }else if(type==="textarea"){
+  control=`<textarea name="${name}" placeholder="${esc(opts.placeholder||"")}" ${opts.required===false?"":"required"}>${esc(value)}</textarea>`;
+ }else{
+  control=`<input name="${name}" type="${type}" value="${esc(value)}" ${opts.min!==undefined?`min="${opts.min}"`:""} ${opts.max!==undefined?`max="${opts.max}"`:""} ${opts.step?`step="${opts.step}"`:""} placeholder="${esc(opts.placeholder||"")}" ${opts.required===false?"":"required"}>`;
+ }
+ return `<div class="field${opts.full?" full":""}"><label>${label}</label>${control}</div>`;
+}
+function openModal(title,desc,body,onSubmit,submitLabel="Save"){
+ modalSubmit=onSubmit;
+ $("#modal").innerHTML=`<h2>${title}</h2><div class="modal-desc">${desc}</div><form id="modalForm"><div class="form-grid">${body}</div><div class="modal-actions"><button type="button" class="btn" data-action="close-modal">Cancel</button><button type="submit" class="btn btn-primary">${submitLabel}</button></div></form>`;
+ $("#modalBackdrop").classList.add("show");
+}
+function closeModal(){$("#modalBackdrop").classList.remove("show");modalSubmit=null;}
+function deleteRecord(list,id,label){
+ if(!confirm(`Delete this ${label}?`))return;
+ state[list]=state[list].filter(x=>x.id!==id);save();render();notify("Deleted.");
+}
+
+function editStudy(item=null,date=localDate(new Date())){
+ openModal(item?"Edit study session":"Add study session","Log focused work, not just time spent at your desk.",[
+  field("Date","date",item?.date||date,"date"),
+  field("Duration (minutes)","minutes",item?.minutes||60,"number",{min:1,max:1440}),
+  field("Subject","subject",item?.subject||"Mathematics","select",{options:[
+   {value:"Mathematics",label:"Mathematics"},{value:"Critical Thinking",label:"Critical Thinking"},
+   {value:"Review",label:"Review / error analysis"},{value:"Other",label:"Other"}
+  ]}),
+  field("Notes","note",item?.note||"","text",{required:false,placeholder:"Topics or tasks completed"})
+ ].join(""),d=>{
+  const n={id:item?.id||uid(),date:d.date,minutes:Number(d.minutes),subject:d.subject,note:d.note.trim()};
+  if(item)state.study=state.study.map(x=>x.id===item.id?n:x);else state.study.push(n);
+  save();render();notify("Study session saved.");
+ });
+}
+function editAttendance(item=null,date=localDate(new Date()),schedule=null){
+ openModal(item?"Edit attendance":"Record attendance","Record the status of one scheduled session.",[
+  field("Date","date",item?.date||date,"date"),
+  field("Session","title",item?.title||schedule?.title||"School","text"),
+  field("Category","type",item?.type||schedule?.type||"School","select",{options:[
+   {value:"School",label:"School"},{value:"Mathematics",label:"Mathematics"},
+   {value:"Critical Thinking",label:"Critical Thinking"},{value:"Both",label:"Both"},{value:"Other",label:"Other"}
+  ]}),
+  field("Start time","time",item?.time||schedule?.time||"08:00","time"),
+  field("Status","status",item?.status||"Present","select",{options:[
+   {value:"Present",label:"Present"},{value:"Absent",label:"Absent"},{value:"Late",label:"Late"}
+  ]}),
+  field("Note","note",item?.note||"","text",{required:false})
+ ].join(""),d=>{
+  const n={id:item?.id||uid(),date:d.date,title:d.title.trim(),type:d.type,time:d.time,status:d.status,note:d.note.trim()};
+  if(item)state.attendance=state.attendance.map(x=>x.id===item.id?n:x);else state.attendance.push(n);
+  save();render();notify("Attendance saved.");
+ });
+}
+function editMock(item=null,finalOnly=false,subject=null){
+ openModal(item?"Edit mock result":finalOnly?"Add final mock":"Add training mock","Record the score, timing and what you learned.",[
+  field("Date","date",item?.date||localDate(new Date()),"date"),
+  field("Subject","subject",item?.subject||subject||"Mathematics","select",{options:SUBJECTS.map(x=>({value:x,label:x}))}),
+  field("Score","score",item?.score??"","number",{min:0,max:120}),
+  field("Maximum score","max",item?.max??120,"number",{min:1,max:120}),
+  field("Time taken (minutes)","time",item?.time??"","number",{min:1,max:600,required:false}),
+  field("Type","kind",item?.kind||(finalOnly?"Final":"Training"),"select",{options:[
+   {value:"Training",label:"Training mock"},{value:"Final",label:"Weekly final"}
+  ]}),
+  field("Review notes","note",item?.note||"","textarea",{full:true,required:false,placeholder:"Mistakes, weak topics, timing issues"})
+ ].join(""),d=>{
+  const score=Number(d.score),max=Number(d.max),kind=finalOnly?"Final":d.kind;
+  if(score>max){notify("Score cannot exceed the maximum.");return;}
+  if(kind==="Final"&&state.mocks.some(x=>x.kind==="Final"&&x.subject===d.subject&&sameWeek(parseDate(x.date),parseDate(d.date))&&x.id!==item?.id)){
+   notify("A final for this subject already exists in that week. Edit it instead.");return;
+  }
+  const n={id:item?.id||uid(),date:d.date,subject:d.subject,score,max,time:d.time?Number(d.time):null,kind,note:d.note.trim()};
+  if(item)state.mocks=state.mocks.map(x=>x.id===item.id?n:x);else state.mocks.push(n);
+  save();render();notify("Mock result saved.");
+ });
+}
+function editLink(item=null){
+ openModal(item?"Edit resource":"Add resource","Your personal collection of useful websites.",[
+  field("Title","title",item?.title||"","text",{full:true}),
+  field("URL","url",item?.url||"","url",{full:true,placeholder:"https://example.com"}),
+  field("Purpose","purpose",item?.purpose||"","textarea",{full:true,required:false}),
+  field("Category","category",item?.category||"Practice","select",{options:[
+   {value:"Practice",label:"Practice"},{value:"Theory",label:"Theory"},
+   {value:"Mock tests",label:"Mock tests"},{value:"Other",label:"Other"}
+  ]})
+ ].join(""),d=>{
+  let url=d.url.trim();if(!/^https?:\/\//i.test(url))url="https://"+url;
+  try{new URL(url)}catch{notify("Please enter a valid URL.");return;}
+  const n={id:item?.id||uid(),title:d.title.trim(),url,purpose:d.purpose.trim(),category:d.category};
+  if(item)state.links=state.links.map(x=>x.id===item.id?n:x);else state.links.push(n);
+  save();render();notify("Resource saved.");
+ });
+}
+function editSchedule(item=null,day=1){
+ openModal(item?"Edit scheduled session":"Add scheduled session","Edit your recurring weekly timetable.",[
+  field("Day","day",item?.day||day,"select",{options:DAYS.map((x,i)=>({value:i+1,label:x}))}),
+  field("Start time","time",item?.time||"17:00","time"),
+  field("End time","end",item?.end||"18:00","time"),
+  field("Title","title",item?.title||"Study session","text",{full:true}),
+  field("Category","type",item?.type||"Other","select",{options:[
+   {value:"School",label:"School"},{value:"Mathematics",label:"Mathematics"},
+   {value:"Critical Thinking",label:"Critical Thinking"},{value:"Both",label:"Both"},{value:"Other",label:"Other"}
+  ]})
+ ].join(""),d=>{
+  if(d.end<=d.time){notify("End time must be after start time.");return;}
+  const n={id:item?.id||uid(),day:Number(d.day),time:d.time,end:d.end,title:d.title.trim(),type:d.type};
+  if(item)state.schedule=state.schedule.map(x=>x.id===item.id?n:x);else state.schedule.push(n);
+  save();render();notify("Schedule saved.");
+ });
+}
+
+/* ---------- PAGES ---------- */
+function dashboard(){
+ const dates=weekDates(weekStart(new Date())),total=totalStudy(dates);
+ const mocks=mocksInWeek(weekStart(new Date()));
+ const finals=mocks.filter(x=>x.kind==="Final");
+ const recent=[...state.study].sort((a,b)=>(b.date+b.id).localeCompare(a.date+a.id)).slice(0,5);
+ const today=localDate(new Date());
+ const todayAttendance=state.attendance.filter(x=>x.date===today);
+ return `${pageHead("Your study command center","Your preparation, in one calm and focused workspace.",`<button class="btn btn-primary" data-action="add-study">＋ Log study</button>`)}
+ <div class="grid g4">
+  ${metric("Study this week",fmtDuration(total),"Last 7 days","◷")}
+  ${metric("Daily average",fmtDuration(Math.round(total/7)),"Zero-study days included","◌")}
+  ${metric("Mocks this week",mocks.length,"Training + finals","∑")}
+  ${metric("Finals completed",`${finals.length}/2`,"Weekly milestones","★")}
+ </div>
+ <div class="grid g2" style="margin-top:16px">
+  <section class="card">${section("Study rhythm","Your current week",`<button class="btn btn-small" data-page="analytics">Analytics ↗</button>`)}
+   ${barChart(dates,dates.map(d=>studyMinutes(localDate(d))),Math.max(60,...dates.map(d=>studyMinutes(localDate(d)))))}
+  </section>
+  <section class="card">${section("Quick actions","Jump straight into your next task")}
+   <div class="stack">
+    <button class="btn" data-action="add-study" style="text-align:left">◷ &nbsp; Record study time</button>
+    <button class="btn" data-action="add-training" style="text-align:left">∑ &nbsp; Add training mock</button>
+    <button class="btn" data-action="add-final" style="text-align:left">★ &nbsp; Record final mock</button>
+    <button class="btn" data-page="attendance" style="text-align:left">✓ &nbsp; Manage attendance</button>
+   </div>
+  </section>
+ </div>
+ <div class="grid g2" style="margin-top:16px">
+  <section class="card">${section("Recent study sessions","Your latest records",`<button class="btn btn-small" data-page="study">View all ↗</button>`)}
+   ${recent.length?recent.map(x=>`<div class="session"><div class="session-dot"></div><div class="session-main"><div class="session-title">${esc(x.subject)} · ${fmtDuration(x.minutes)}</div><div class="session-sub">${fmtDate(parseDate(x.date),{day:"numeric",month:"short",year:"numeric"})}${x.note?" · "+esc(x.note):""}</div></div><button class="btn btn-small" data-action="edit-study" data-id="${x.id}">Edit</button></div>`).join(""):empty("No study sessions yet.<br>Record your first focused session.")}
+  </section>
+  <section class="card">${section("Weekly finals","One result per subject")}
+   ${SUBJECTS.map(s=>{const m=finals.find(x=>x.subject===s);return `<div class="session"><div class="session-dot"></div><div class="session-main"><div class="session-title">${s}</div><div class="session-sub">${m?`Completed · ${m.score}/${m.max}`:"Pending this week"}</div></div><button class="btn btn-small" data-action="${m?"edit-mock":"add-final-subject"}" data-id="${m?.id||""}" data-subject="${s}">${m?"Edit":"Add result"}</button></div>`}).join("")}
+  </section>
+ </div>
+ <section class="card" style="margin-top:16px">${section("Today's attendance","Records you've already marked",`<button class="btn btn-small" data-page="schedule">Schedule ↗</button>`)}
+  ${todayAttendance.length?todayAttendance.map(x=>`<div class="session"><div class="session-dot"></div><div class="session-main"><div class="session-title">${esc(x.title)}</div><div class="session-sub">${esc(x.time)} · ${esc(x.type)}</div></div><span class="tag ${x.status==="Present"?"green":x.status==="Absent"?"red":"orange"}">${x.status}</span></div>`).join(""):empty("No attendance records for today.")}
+ </section>`;
+}
+
+function studyPage(){
+ const dates=weekDates(),values=dates.map(d=>studyMinutes(localDate(d)));
+ const rows=state.study.filter(x=>sameWeek(parseDate(x.date),selectedWeek)).sort((a,b)=>(b.date+b.id).localeCompare(a.date+a.id));
+ const total=values.reduce((a,b)=>a+b,0);
+ return `${pageHead("Study Log","Every focused session counts. Record duration, subject and notes.",`<button class="btn btn-primary" data-action="add-study">＋ Add session</button>`)}
+ <section class="card">${section("Selected week","Navigate through your history",weekControl())}
+  <div class="grid g3">
+   ${metric("Total study",fmtDuration(total),"Selected week","◷")}
+   ${metric("Daily average",fmtDuration(Math.round(total/7)),"Total divided by seven","◌")}
+   ${metric("Sessions",rows.length,"Individual records","▤")}
+  </div>
+  <div style="margin-top:20px">${section("Daily distribution","Your study time by day")}${barChart(dates,values,Math.max(60,...values))}</div>
+ </section>
+ <section class="card" style="margin-top:16px">${section("Session history","Edit or delete records",`<button class="btn btn-small" data-action="export-study">Export CSV</button>`)}
+  ${rows.length?`<div class="table-wrap"><table><thead><tr><th>Date</th><th>Subject</th><th>Duration</th><th>Notes</th><th>Actions</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${fmtDate(parseDate(x.date))}</td><td>${esc(x.subject)}</td><td>${fmtDuration(x.minutes)}</td><td>${esc(x.note||"—")}</td><td><div class="btn-row"><button class="btn btn-small" data-action="edit-study" data-id="${x.id}">Edit</button><button class="btn btn-small btn-danger" data-action="delete-study" data-id="${x.id}">Delete</button></div></td></tr>`).join("")}</tbody></table></div>`:empty("No sessions this week. Add a session to begin tracking.")}
+ </section>`;
+}
+
+function analyticsPage(){
+ const dates=weekDates(),values=dates.map(d=>studyMinutes(localDate(d)));
+ const total=values.reduce((a,b)=>a+b,0),active=values.filter(x=>x>0).length;
+ const best=Math.max(...values),worst=Math.min(...values);
+ const prev=weekDates(addDays(selectedWeek,-7)).reduce((s,d)=>s+studyMinutes(localDate(d)),0);
+ const diff=total-prev,mocks=mocksInWeek();
+ const avg=s=>{const a=mocks.filter(x=>x.subject===s);return a.length?Math.round(a.reduce((t,x)=>t+x.score/x.max*100,0)/a.length):null;};
+ return `${pageHead("Weekly Analytics","Find patterns, compare weeks and understand where your time goes.",weekControl())}
+ <div class="grid g4">
+  ${metric("Total study",fmtDuration(total),"Selected week","◷")}
+  ${metric("Daily average",fmtDuration(Math.round(total/7)),"All seven days","◌")}
+  ${metric("Active days",`${active}/7`,"At least one session","✓")}
+  ${metric("vs previous week",`${diff>0?"+":diff<0?"−":""}${fmtDuration(Math.abs(diff))}`,diff>0?"More time":diff<0?"Less time":"No change","↗")}
+ </div>
+ <div class="grid g2" style="margin-top:16px">
+  <section class="card">${section("Study distribution","Daily time recorded")}
+   ${barChart(dates,values,Math.max(60,...values))}
+   <div class="grid g2" style="margin-top:15px">
+    <div style="background:var(--soft);padding:14px;border-radius:13px"><div class="small muted">Best day</div><h2 style="margin-top:7px">${values.indexOf(best)>=0?DAY_RU[values.indexOf(best)]:"—"}</h2><div class="small" style="margin-top:5px">${fmtDuration(best)}</div></div>
+    <div style="background:#f6f7fa;padding:14px;border-radius:13px"><div class="small muted">Lowest day</div><h2 style="margin-top:7px">${DAY_RU[values.indexOf(worst)]}</h2><div class="small" style="margin-top:5px">${fmtDuration(worst)}</div></div>
+   </div>
+  </section>
+  <section class="card">${section("Daily goal","Set your target in Settings")}
+   ${dates.map((d,i)=>`<div style="margin-bottom:15px"><div class="row"><span class="small">${DAY_RU[i]} · ${fmtDate(d)}</span><strong class="small">${fmtDuration(values[i])} / ${state.settings.goal}h</strong></div><div class="progress"><span style="width:${Math.min(100,values[i]/(state.settings.goal*60)*100)}%"></span></div></div>`).join("")}
+  </section>
+ </div>
+ <section class="card" style="margin-top:16px">${section("Mock performance","Average percentage for each subject")}
+  <div class="grid g2">${SUBJECTS.map(s=>`<div style="padding:18px;background:var(--soft);border-radius:14px"><div class="small muted">${s}</div><div class="metric-value" style="margin-top:9px">${avg(s)===null?"—":avg(s)+"%"}</div><div class="small muted" style="margin-top:6px">${mocks.filter(x=>x.subject===s).length} mock(s) this week</div></div>`).join("")}</div>
+  <div class="grid g2" style="margin-top:18px">
+   <div><div class="row"><span class="small muted">Training mocks</span><strong>${mocks.filter(x=>x.kind==="Training").length}</strong></div><div class="progress"><span style="width:${Math.min(100,mocks.filter(x=>x.kind==="Training").length/6*100)}%"></span></div><div class="small muted" style="margin-top:5px">Reference: 6–8 per week</div></div>
+   <div><div class="row"><span class="small muted">Final mocks</span><strong>${mocks.filter(x=>x.kind==="Final").length}/2</strong></div><div class="progress"><span style="width:${mocks.filter(x=>x.kind==="Final").length/2*100}%"></span></div></div>
+  </div>
+ </section>
+ <section class="card" style="margin-top:16px">${section("Daily data","Study time, session count and goal completion")}
+  <div class="table-wrap"><table><thead><tr><th>Day</th><th>Time</th><th>Sessions</th><th>Goal</th></tr></thead><tbody>${dates.map((d,i)=>`<tr><td>${DAY_RU[i]} · ${fmtDate(d)}</td><td>${fmtDuration(values[i])}</td><td>${studyFor(localDate(d)).length}</td><td><span class="tag ${values[i]>=state.settings.goal*60?"green":"gray"}">${Math.round(values[i]/(state.settings.goal*60)*100)}%</span></td></tr>`).join("")}</tbody></table></div>
+ </section>`;
+}
+
+function attendancePage(){
+ const dates=weekDates(),rows=state.attendance.filter(x=>sameWeek(parseDate(x.date),selectedWeek)).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+ const present=rows.filter(x=>x.status==="Present").length,late=rows.filter(x=>x.status==="Late").length,absent=rows.filter(x=>x.status==="Absent").length;
+ const rate=rows.length?Math.round((present+late)/rows.length*100):0;
+ return `${pageHead("Attendance","Track school and online lessons independently from study hours.",`<button class="btn btn-primary" data-action="add-attendance">＋ Record attendance</button>`)}
+ <section class="card">${section("Selected week","Only marked sessions are included in these metrics",weekControl())}
+  <div class="grid g4">
+   ${metric("Recorded",rows.length,"Marked sessions","▤")}
+   ${metric("Present",present,"Attended on time","✓")}
+   ${metric("Absent",absent,"Missed sessions","×")}
+   ${metric("Attendance rate",rows.length?rate+"%":"—","Present + late / recorded","%")}
+  </div>
+ </section>
+ <section class="card" style="margin-top:16px">${section("Attendance history","Edit a status or remove a record",`<button class="btn btn-small" data-action="export-attendance">Export CSV</button>`)}
+  ${rows.length?`<div class="table-wrap"><table><thead><tr><th>Date</th><th>Time</th><th>Session</th><th>Status</th><th>Note</th><th>Actions</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${fmtDate(parseDate(x.date))}</td><td>${esc(x.time)}</td><td><strong>${esc(x.title)}</strong><div class="small muted">${esc(x.type)}</div></td><td><span class="tag ${x.status==="Present"?"green":x.status==="Absent"?"red":"orange"}">${x.status}</span></td><td>${esc(x.note||"—")}</td><td><div class="btn-row"><button class="btn btn-small" data-action="edit-attendance" data-id="${x.id}">Edit</button><button class="btn btn-small btn-danger" data-action="delete-attendance" data-id="${x.id}">Delete</button></div></td></tr>`).join("")}</tbody></table></div>`:empty("No attendance records for this week.")}
+ </section>
+ <section class="card" style="margin-top:16px">${section("Mark a scheduled session","Select the day to see its planned classes")}
+  ${dates.map((d,i)=>{const sessions=state.schedule.filter(x=>x.day===i+1);return `<div class="session"><div class="session-dot"></div><div class="session-main"><div class="session-title">${DAY_RU[i]} · ${fmtDate(d)}</div><div class="session-sub">${sessions.length?sessions.map(x=>`${x.time} ${x.title}`).join(" · "):"No scheduled sessions"}</div></div><button class="btn btn-small" data-action="quick-attendance" data-day="${i+1}" data-date="${localDate(d)}">Mark</button></div>`}).join("")}
+ </section>`;
+}
+
+function schedulePage(){
+ const dates=weekDates();
+ return `${pageHead("Weekly Schedule","Your school and course timetable. Click a class to record attendance.",`<button class="btn btn-primary" data-action="add-schedule">＋ Add session</button>`)}
+ <section class="card">${section("Week at a glance","Your recurring timetable",weekControl())}
+  <div class="grid week-grid" style="grid-template-columns:repeat(7,minmax(0,1fr));gap:9px">
+   ${dates.map((d,i)=>{const items=state.schedule.filter(x=>x.day===i+1).sort((a,b)=>a.time.localeCompare(b.time));return `<div class="day-card"><div class="day-name">${DAY_RU[i]} · ${fmtDate(d)}</div>${items.map(s=>`<button class="day-item" data-action="schedule-detail" data-id="${s.id}" data-date="${localDate(d)}" style="width:100%;border:0;text-align:left">${esc(s.time)}<br>${esc(s.title)}</button>`).join("")||`<div class="small muted">Free day</div>`}</div>`}).join("")}
+  </div>
+ </section>
+ <div class="grid g2" style="margin-top:16px">
+  <section class="card">${section("School","Monday–Friday · 08:00–16:00")}
+   <div class="session"><div class="session-dot"></div><div class="session-main"><div class="session-title">School day</div><div class="session-sub">5 days per week · Attendance tracked separately</div></div><span class="tag">Weekly</span></div>
+  </section>
+  <section class="card">${section("Online courses","STP and Pixels")}
+   ${["STP","Pixels"].map(t=>`<div class="session"><div class="session-dot"></div><div class="session-main"><div class="session-title">${t}</div><div class="session-sub">${state.schedule.filter(x=>x.title.includes(t)).length} recurring sessions in the timetable</div></div></div>`).join("")}
+  </section>
+ </div>
+ <section class="card" style="margin-top:16px">${section("Manage timetable","Edit or remove sessions")}
+  <div class="table-wrap"><table><thead><tr><th>Day</th><th>Time</th><th>Session</th><th>Category</th><th>Actions</th></tr></thead><tbody>${state.schedule.slice().sort((a,b)=>a.day-b.day||a.time.localeCompare(b.time)).map(s=>`<tr><td>${DAY_RU[s.day-1]}</td><td>${esc(s.time)}–${esc(s.end)}</td><td>${esc(s.title)}</td><td><span class="tag">${esc(s.type)}</span></td><td><div class="btn-row"><button class="btn btn-small" data-action="edit-schedule" data-id="${s.id}">Edit</button><button class="btn btn-small btn-danger" data-action="delete-schedule" data-id="${s.id}">Delete</button></div></td></tr>`).join("")}</tbody></table></div>
+ </section>`;
+}
+
+function mocksPage(finalOnly){
+ const kind=finalOnly?"Final":"Training";
+ const rows=mocksInWeek().filter(x=>x.kind===kind).sort((a,b)=>b.date.localeCompare(a.date));
+ const stats=SUBJECTS.map(s=>{const a=rows.filter(x=>x.subject===s);return {s,n:a.length,avg:a.length?Math.round(a.reduce((t,x)=>t+x.score/x.max*100,0)/a.length):null};});
+ return `${pageHead(finalOnly?"Final Mocks":"Training Mocks",finalOnly?"A weekly checkpoint: one final in Mathematics and one in Critical Thinking.":"Practice tests, timing experiments and error analysis.",`<button class="btn btn-primary" data-action="${finalOnly?"add-final":"add-training"}">＋ Add ${finalOnly?"final":"training mock"}</button>`)}
+ <section class="card">${section("Selected week","Review your results week by week",weekControl())}
+  <div class="grid g3">
+   ${stats.map(x=>metric(x.s,x.avg===null?"—":x.avg+"%",`Average · ${x.n} mock(s)`,x.s==="Mathematics"?"∑":"◎")).join("")}
+   ${metric(finalOnly?"Finals recorded":"Training mocks",finalOnly?`${rows.length}/2`:rows.length,finalOnly?"Weekly milestones":"Reference: 6–8 per week","★")}
+  </div>
+ </section>
+ ${finalOnly?`<div class="grid g2" style="margin-top:16px">${SUBJECTS.map(s=>{const m=rows.find(x=>x.subject===s);return `<section class="card">${section(s,"Weekly milestone",`<span class="tag ${m?"green":"orange"}">${m?"Completed":"Pending"}</span>`)}<div class="metric-value">${m?`${m.score}/${m.max}`:"—"}</div><div class="small muted" style="margin-top:7px">${m?`${Math.round(m.score/m.max*100)}% · ${fmtDate(parseDate(m.date))}`:"No result recorded yet."}</div><div class="progress"><span style="width:${m?m.score/m.max*100:0}%"></span></div><div style="margin-top:16px"><button class="btn ${m?"":"btn-primary"}" data-action="${m?"edit-mock":"add-final-subject"}" data-id="${m?.id||""}" data-subject="${s}">${m?"Edit result":"Record final"}</button></div></section>`}).join("")}</div>`:""}
+ <section class="card" style="margin-top:16px">${section(finalOnly?"Final results":"Training history","Edit your scores or review notes",`<button class="btn btn-small" data-action="export-mocks">Export CSV</button>`)}
+  ${rows.length?`<div class="table-wrap"><table><thead><tr><th>Date</th><th>Subject</th><th>Score</th><th>Percentage</th><th>Time</th><th>Notes</th><th>Actions</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${fmtDate(parseDate(x.date))}</td><td>${esc(x.subject)}</td><td>${x.score}/${x.max}</td><td><span class="tag ${x.score/x.max>=.8?"green":x.score/x.max>=.6?"orange":"red"}">${Math.round(x.score/x.max*100)}%</span></td><td>${x.time?fmtDuration(x.time):"—"}</td><td>${esc(x.note||"—")}</td><td><div class="btn-row"><button class="btn btn-small" data-action="edit-mock" data-id="${x.id}">Edit</button><button class="btn btn-small btn-danger" data-action="delete-mock" data-id="${x.id}">Delete</button></div></td></tr>`).join("")}</tbody></table></div>`:empty(`No ${kind.toLowerCase()} results in this week yet.`)}
+ </section>`;
+}
+
+function linksPage(){
+ return `${pageHead("Resource Library","Your collection of practice sites, theory and useful NUET materials.",`<button class="btn btn-primary" data-action="add-link">＋ Add resource</button>`)}
+ <div class="grid g3">
+  ${metric("Saved resources",state.links.length,"Your personal collection","↗")}
+  ${metric("Practice resources",state.links.filter(x=>["Practice","Mock tests"].includes(x.category)).length,"Practice and mock tests","◎")}
+  ${metric("Theory resources",state.links.filter(x=>x.category==="Theory").length,"Learning materials","▤")}
+ </div>
+ <section class="card" style="margin-top:16px">${section("Your library","Open, edit or remove a resource")}
+  ${state.links.length?`<div class="grid g2">${state.links.map(x=>`<div class="card" style="box-shadow:none">
+   <div class="link-card"><div class="link-icon">↗</div><div class="link-main"><h3>${esc(x.title)}</h3><p>${esc(x.purpose||"No description added.")}</p><span class="tag">${esc(x.category)}</span><div class="btn-row" style="margin-top:12px"><button class="btn btn-primary btn-small" data-action="open-link" data-id="${x.id}">Open ↗</button><button class="btn btn-small" data-action="edit-link" data-id="${x.id}">Edit</button><button class="btn btn-small btn-danger" data-action="delete-link" data-id="${x.id}">Delete</button></div></div></div>
+  </div>`).join("")}</div>`:empty("Your resource library is empty.<br>Add a practice website, mock bank or theory resource.")}
+ </section>`;
+}
+
+function settingsPage(){
+ return `${pageHead("Settings","Personalize your targets and keep control of your data.")}
+ <div class="grid g2">
+  <section class="card">${section("Study preferences","Your daily target is used in weekly analytics")}
+   <form id="settingsForm"><div class="field"><label>Daily study goal (hours)</label><input type="number" name="goal" min="1" max="16" value="${state.settings.goal}" required></div><div style="margin-top:15px"><button class="btn btn-primary">Save preferences</button></div></form>
+  </section>
+  <section class="card">${section("Data management","Stored in this browser on this device")}
+   <div class="settings-row"><div><strong class="small">Export full backup</strong><p>Save your logs, attendance, mocks, schedule and links.</p></div><button class="btn" data-action="export-json">Export</button></div>
+   <div class="settings-row"><div><strong class="small">Import backup</strong><p>Restore a JSON backup exported by this app.</p></div><button class="btn" data-action="import-json">Import</button><input id="importFile" type="file" accept=".json,application/json" hidden></div>
+   <div class="settings-row"><div><strong class="small">Reset workspace</strong><p>Remove all stored data. Export a backup first if needed.</p></div><button class="btn btn-danger" data-action="reset">Reset</button></div>
+  </section>
+ </div>
+ <section class="card" style="margin-top:16px">${section("Workspace status","Quick overview of saved records")}
+  ${[["Study sessions",state.study.length],["Attendance records",state.attendance.length],["Mock results",state.mocks.length],["Saved resources",state.links.length],["Scheduled sessions",state.schedule.length]].map(([k,v])=>`<div class="settings-row"><strong class="small">${k}</strong><span class="tag">${v}</span></div>`).join("")}
+ </section>`;
+}
+
+function render(){
+ setTheme();
+ document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===page));
+ $("#crumb").textContent=META[page].title;
+ $("#today").textContent=new Date().toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});
+ const pages={
+  dashboard,study:studyPage,analytics:analyticsPage,attendance:attendancePage,
+  schedule:schedulePage,training:()=>mocksPage(false),finals:()=>mocksPage(true),
+  links:linksPage,settings:settingsPage
+ };
+ $("#content").innerHTML=`<div class="page-enter">${(pages[page]||dashboard)()}</div>`;
+}
+
+/* ---------- EXPORT ---------- */
+function downloadFile(name,content,type="text/plain;charset=utf-8"){
+ const blob=new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function csvCell(v){return `"${String(v??"").replace(/"/g,'""')}"`;}
+function exportCSV(name,headers,rows){
+ downloadFile(name,"\uFEFF"+[headers,...rows].map(r=>r.map(csvCell).join(",")).join("\r\n"),"text/csv;charset=utf-8");
+ notify("CSV exported.");
+}
+function exportStudy(){exportCSV("nuet-study-log.csv",["Date","Subject","Minutes","Notes"],state.study.map(x=>[x.date,x.subject,x.minutes,x.note]));}
+function exportAttendance(){exportCSV("nuet-attendance.csv",["Date","Time","Session","Type","Status","Notes"],state.attendance.map(x=>[x.date,x.time,x.title,x.type,x.status,x.note]));}
+function exportMocks(){exportCSV("nuet-mocks.csv",["Date","Type","Subject","Score","Maximum","Percentage","Minutes","Notes"],state.mocks.map(x=>[x.date,x.kind,x.subject,x.score,x.max,Math.round(x.score/x.max*100),x.time,x.note]));}
+
+/* ---------- NAVIGATION + ACTIONS ---------- */
+$("#nav").addEventListener("click",e=>{
+ const b=e.target.closest("[data-page]");if(!b)return;
+ page=b.dataset.page;render();
+});
+
+$("#content").addEventListener("click",e=>{
+ const nav=e.target.closest("[data-page]");
+ if(nav){page=nav.dataset.page;render();return;}
+ const b=e.target.closest("[data-action]");if(!b)return;
+ const a=b.dataset.action,id=b.dataset.id;
+ const find=list=>state[list].find(x=>x.id===id);
+ switch(a){
+  case "add-study":editStudy();break;
+  case "edit-study":editStudy(find("study"));break;
+  case "delete-study":deleteRecord("study",id,"study session");break;
+  case "add-attendance":editAttendance();break;
+  case "edit-attendance":editAttendance(find("attendance"));break;
+  case "delete-attendance":deleteRecord("attendance",id,"attendance record");break;
+  case "add-training":editMock(null,false);break;
+  case "add-final":editMock(null,true);break;
+  case "add-final-subject":editMock(null,true,b.dataset.subject);break;
+  case "edit-mock":editMock(find("mocks"),find("mocks")?.kind==="Final");break;
+  case "delete-mock":deleteRecord("mocks",id,"mock result");break;
+  case "add-link":editLink();break;
+  case "edit-link":editLink(find("links"));break;
+  case "delete-link":deleteRecord("links",id,"resource");break;
+  case "open-link":{const x=find("links");if(x)window.open(x.url,"_blank","noopener,noreferrer");break;}
+  case "week-prev":selectedWeek=addDays(selectedWeek,-7);render();break;
+  case "week-next":selectedWeek=addDays(selectedWeek,7);render();break;
+  case "week-now":selectedWeek=weekStart(new Date());render();break;
+  case "export-study":exportStudy();break;
+  case "export-attendance":exportAttendance();break;
+  case "export-mocks":exportMocks();break;
+  case "add-schedule":editSchedule();break;
+  case "edit-schedule":editSchedule(find("schedule"));break;
+  case "delete-schedule":
+   if(confirm("Delete this scheduled session?")){state.schedule=state.schedule.filter(x=>x.id!==id);save();render();notify("Session deleted.");}
+   break;
+  case "schedule-detail":{
+   const s=find("schedule");
+   if(s)editAttendance(null,b.dataset.date,s);
+   break;
+  }
+  case "quick-attendance":{
+   const sessions=state.schedule.filter(x=>x.day===Number(b.dataset.day));
+   if(!sessions.length){editAttendance(null,b.dataset.date);break;}
+   if(sessions.length===1){editAttendance(null,b.dataset.date,sessions[0]);break;}
+   openModal("Choose a session","Which session are you recording?",[
+    field("Session","pick",sessions[0].id,"select",{options:sessions.map(s=>({value:s.id,label:`${s.time} · ${s.title}`}))}),
+    field("Status","status","Present","select",{options:[{value:"Present",label:"Present"},{value:"Absent",label:"Absent"},{value:"Late",label:"Late"}]})
+   ].join(""),d=>{
+    const s=sessions.find(x=>x.id===d.pick);
+    state.attendance.push({id:uid(),date:b.dataset.date,title:s.title,type:s.type,time:s.time,status:d.status,note:""});
+    save();render();notify("Attendance saved.");
+   });
+   break;
+  }
+  case "close-modal":closeModal();break;
+  case "export-json":downloadFile("nuet-study-os-backup.json",JSON.stringify(state,null,2),"application/json");notify("Backup exported.");break;
+  case "import-json":$("#importFile").click();break;
+  case "reset":
+   if(confirm("Delete ALL logs, attendance, mocks, links and timetable changes? This cannot be undone.")){
+    state=freshState();selectedWeek=weekStart(new Date());save();render();notify("Workspace reset.");
+   }break;
+ }
+});
+
+$("#modalBackdrop").addEventListener("click",e=>{if(e.target.id==="modalBackdrop")closeModal();});
+$("#modal").addEventListener("click",e=>{if(e.target.closest('[data-action="close-modal"]'))closeModal();});
+$("#modal").addEventListener("submit",e=>{
+ e.preventDefault();if(!modalSubmit)return;
+ modalSubmit(Object.fromEntries(new FormData(e.target).entries()));
+});
+
+$("#content").addEventListener("submit",e=>{
+ if(e.target.id!=="settingsForm")return;
+ e.preventDefault();
+ const goal=Number(new FormData(e.target).get("goal"));
+ if(!Number.isFinite(goal)||goal<1||goal>16){notify("Choose a goal between 1 and 16 hours.");return;}
+ state.settings.goal=goal;save();render();notify("Preferences saved.");
+});
+
+$("#importFile").addEventListener("change",async e=>{
+ const file=e.target.files[0];if(!file)return;
+ try{
+  const d=JSON.parse(await file.text());
+  for(const k of ["study","attendance","mocks","links","schedule"])if(!Array.isArray(d[k]))throw new Error("Invalid backup");
+  if(!confirm("Replace current data with this backup?"))return;
+  state={...freshState(),...d,settings:{...freshState().settings,...d.settings}};
+  save();render();notify("Backup imported.");
+ }catch{notify("Import failed. Choose a valid NUET Study OS backup.");}
+ finally{e.target.value="";}
+});
+
+render();
+</script>
+</body>
+</html>
